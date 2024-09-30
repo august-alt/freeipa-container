@@ -4,9 +4,8 @@ FROM alt:p10
 RUN groupadd -g 288 kdcproxy ; useradd -u 288 -g 288 -c 'IPA KDC Proxy User' -r -d / -s '/sbin/nologin' kdcproxy
 RUN groupadd -g 289 ipaapi; useradd -u 289 -g 289 -c 'IPA Framework User' -r -d / -s '/sbin/nologin' ipaapi
 
-# Workaround 1615948
+# Workaround https://bugzilla.redhat.com/show_bug.cgi?id=1615948
 RUN ln -s /bin/false /usr/sbin/systemd-machine-id-setup
-# RUN sed -i 's!%_install_langs.*!%_install_langs all!' /etc/rpm/macros.image-language-conf => No such file on ALT linux distribution find the cause!
 RUN apt-get update && apt-get install -y freeipa-server freeipa-server-dns freeipa-server-trust-ad patch freeipa-healthcheck freeipa-client-epn && apt-get clean
 
 # debug: RUN test $( getent passwd | grep -E "^(dirsrv:x:389|ipaapi:x:289|kdcproxy:x:288|pkiuser:x:17):" | wc -l ) -eq 4
@@ -28,9 +27,6 @@ STOPSIGNAL RTMIN+3
 
 # Minimize the systemd setup
 RUN find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants -type l \! -lname /dev/null | xargs rm -v
-# RUN systemctl mask systemd-logind.service && mv /usr/lib/systemd/system/systemd-logind.service /usr/lib/systemd/system/systemd-logind.service-disable-dbus => TODO: No systemd-logind.service on ALT linux debug!
-# COPY patches/minimal-fedora-37.patch /root/ # TODO: No files to patch - debug!
-# RUN patch --verbose -p0 --fuzz=0 < /root/minimal-fedora-37.patch
 # debug: RUN ! find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants /etc/tmpfiles.d -type f | grep .
 
 # RUN ln -s /usr/lib/systemd/system/dbus-broker.service /usr/lib/systemd/system/dbus.service
@@ -41,7 +37,7 @@ RUN rmdir -v /etc/systemd/system/multi-user.target.wants \
         && ln -s /etc/systemd/system/container-ipa.target.wants /etc/systemd/system/multi-user.target.wants
 # podman in systemd mode mounts /var/log/journal volume which creates
 # the directory anyway and pollutes podman diff, just pre-create it
-# RUN mkdir /var/log/journal # Exists on ALT Linux
+RUN mkdir -p /var/log/journal
 # debug: RUN ! test -f /var/lib/systemd/random-seed
 RUN systemd-tmpfiles --remove --create
 # debug: RUN ! test -f /var/lib/systemd/random-seed
@@ -50,8 +46,8 @@ RUN systemd-tmpfiles --remove --create
 
 # Prepare for basic ipa-server-install in container
 # Address failing nis-domainname.service in the ipa-client-install step
-# RUN mv /usr/bin/nisdomainname /usr/bin/nisdomainname.orig
-ADD hostnamectl-wrapper /usr/bin/nisdomainname
+RUN mv /bin/nisdomainname /usr/bin/nisdomainname.orig
+ADD hostnamectl-wrapper /bin/nisdomainname
 
 COPY patches/ipa-altlinux-p10.patch /root
 RUN set -o pipefail ; patch --verbose -p0 --fuzz=0 < /root/ipa-altlinux-p10.patch | tee /dev/null | sed -n 's/^patching file //;T;/\.py$/p' | xargs /usr/bin/python3 -m compileall
@@ -69,8 +65,8 @@ COPY journald-storage.conf /usr/lib/systemd/journald.conf.d/storage.conf
 RUN mv /usr/sbin/ipa-join /usr/sbin/ipa-join.orig
 COPY ipa-join /usr/sbin/ipa-join
 
-# RUN authselect select sssd with-sudo --force && mv /usr/bin/authselect /usr/bin/authselect.orig # TODO: Rewrite to use ALT controls
-# COPY authselect /usr/bin/authselect
+# We possibly need to update /etc/nsswitch.conf
+RUN control system-auth sss
 
 COPY utils/prepare-volume-template utils/populate-volume-from-template utils/extract-rpm-upgrade-scriptlets /usr/local/bin/
 COPY volume-data-list volume-tmp-list volume-data-autoupdate /etc/
@@ -92,6 +88,9 @@ COPY ipa-server-configure-first.service ipa-server-upgrade.service ipa-server-up
 COPY service-success-poweroff.conf /usr/lib/systemd/system/ipa-server-configure-first.service.d/service-success-poweroff.conf.template
 RUN ln -sv /usr/lib/systemd/system/ipa-server-configure-first.service /data-template/etc/systemd/system/container-ipa.target.wants/ipa-server-configure-first.service
 COPY exit-status.conf /usr/lib/systemd/system/systemd-poweroff.service.d/
+
+RUN ln -s /lib/systemd/systemd /usr/sbin/init
+RUN ln -s /lib/systemd/system/httpd2.service /usr/lib/systemd/system/httpd.service
 
 EXPOSE 53/udp 53 80 443 389 636 88 464 88/udp 464/udp 123/udp
 
