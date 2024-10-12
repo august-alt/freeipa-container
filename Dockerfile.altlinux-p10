@@ -23,6 +23,8 @@ RUN localedef --force -i en_US -f UTF-8 en_US.utf-8
 # Establish reasonably low open files limit in the container
 RUN echo "DefaultLimitNOFILE=1024" >> /etc/systemd/system.conf
 
+RUN ln -s /lib/systemd/systemd /usr/sbin/init
+
 ENTRYPOINT [ "/usr/sbin/init" ]
 STOPSIGNAL RTMIN+3
 # test: systemd-container-failed.sh
@@ -95,8 +97,6 @@ COPY ipa-server-configure-first.service ipa-server-upgrade.service ipa-server-up
 COPY service-success-poweroff.conf /usr/lib/systemd/system/ipa-server-configure-first.service.d/service-success-poweroff.conf.template
 RUN ln -sv /usr/lib/systemd/system/ipa-server-configure-first.service /data-template/etc/systemd/system/container-ipa.target.wants/ipa-server-configure-first.service
 COPY exit-status.conf /usr/lib/systemd/system/systemd-poweroff.service.d/
-
-RUN ln -s /lib/systemd/systemd /usr/sbin/init
 
 # Prepare HTTPD2
 RUN rm -f /data-template/etc/httpd2/modules /data-template/etc/httpd2/logs /data-template/etc/httpd2/lock /data-template/etc/httpd2/uploads
