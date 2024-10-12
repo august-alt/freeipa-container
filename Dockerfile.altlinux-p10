@@ -88,18 +88,6 @@ RUN /usr/local/bin/extract-rpm-upgrade-scriptlets
 RUN echo 2.0 > /etc/volume-version
 VOLUME [ "/tmp", "/run", "/data" ]
 
-COPY init-data-minimal /usr/local/sbin/init
-ENTRYPOINT [ "/usr/local/sbin/init" ]
-# test: systemd-container-ipa-server-install-data.sh /dev/null
-
-# Configure master/replica upon the first invocation
-COPY init-data /usr/local/sbin/init
-COPY ipa-server-configure-first systemctl-exit-with-status ipa-volume-upgrade-* /usr/sbin/
-COPY ipa-server-configure-first.service ipa-server-upgrade.service ipa-server-update-self-ip-address.service /usr/lib/systemd/system/
-COPY service-success-poweroff.conf /usr/lib/systemd/system/ipa-server-configure-first.service.d/service-success-poweroff.conf.template
-RUN ln -sv /usr/lib/systemd/system/ipa-server-configure-first.service /data-template/etc/systemd/system/container-ipa.target.wants/ipa-server-configure-first.service
-COPY exit-status.conf /usr/lib/systemd/system/systemd-poweroff.service.d/
-
 # Prepare HTTPD2
 RUN rm -f /data-template/etc/httpd2/modules /data-template/etc/httpd2/logs /data-template/etc/httpd2/lock /data-template/etc/httpd2/uploads
 RUN ln -s /usr/lib64/apache2/modules /data-template/etc/httpd2/modules
@@ -112,12 +100,24 @@ RUN ln -s /data/var/spool/apache2/uploads /data-template/etc/httpd2/uploads
 COPY gssproxy.service /lib/systemd/system/gssproxy.service
 RUN ln -sv /lib/systemd/system/gssproxy.service /data-template/etc/systemd/system/container-ipa.target.wants/gssproxy.service
 
+# RUN rm -f /usr/sbin/ipa-client-install && ln -s /bin/true /usr/sbin/ipa-client-install
+RUN sed -i -r 's/^(session\s+required\s+pam_limits.so)/#\1/' /data-template/etc/pam.d/*
+
+COPY init-data-minimal /usr/local/sbin/init
+ENTRYPOINT [ "/usr/local/sbin/init" ]
+# test: systemd-container-ipa-server-install-data.sh /dev/null
+
+# Configure master/replica upon the first invocation
+COPY init-data /usr/local/sbin/init
+COPY ipa-server-configure-first systemctl-exit-with-status ipa-volume-upgrade-* /usr/sbin/
+COPY ipa-server-configure-first.service ipa-server-upgrade.service ipa-server-update-self-ip-address.service /usr/lib/systemd/system/
+COPY service-success-poweroff.conf /usr/lib/systemd/system/ipa-server-configure-first.service.d/service-success-poweroff.conf.template
+RUN ln -sv /usr/lib/systemd/system/ipa-server-configure-first.service /data-template/etc/systemd/system/container-ipa.target.wants/ipa-server-configure-first.service
+COPY exit-status.conf /usr/lib/systemd/system/systemd-poweroff.service.d/
+
 EXPOSE 53/udp 53 80 443 389 636 88 464 88/udp 464/udp 123/udp
 
 RUN uuidgen > /data-template/build-id
-
-# RUN rm -f /usr/sbin/ipa-client-install && ln -s /bin/true /usr/sbin/ipa-client-install
-RUN sed -i -r 's/^(session\s+required\s+pam_limits.so)/#\1/' /data-template/etc/pam.d/*
 
 # Invocation:
 # docker run -ti -v /opt/ipa-data:/data:Z -h ipa.example.test ${NAME} [ options ]
