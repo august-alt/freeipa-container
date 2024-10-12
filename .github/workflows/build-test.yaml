@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-rawhide, fedora-40, fedora-39, centos-9-stream, rocky-9, rocky-8, almalinux-9, almalinux-8 ]
+        os: [ fedora-rawhide, fedora-40, fedora-39, centos-9-stream, rocky-9, rocky-8, almalinux-9, almalinux-8, altlinux-p10 ]
         docker: [ docker ]
     timeout-minutes: 15
     steps:
@@ -86,7 +86,7 @@ jobs:
           - os: centos-9-stream
             readonly: --read-only
             ca: --external-ca
-        os: [ fedora-39, almalinux-9, rocky-8 ]
+        os: [ fedora-39, almalinux-9, rocky-8, altlinux-p10 ]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-rawhide, fedora-40, rocky-9, almalinux-8 ]
+        os: [ fedora-rawhide, fedora-40, rocky-9, almalinux-8, altlinux-p10 ]
         readonly: [ --read-only ]
     timeout-minutes: 30
     steps:
@@ -185,7 +185,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-40, centos-9-stream, rocky-9, almalinux-8 ]
+        os: [ fedora-40, centos-9-stream, rocky-9, almalinux-8, altlinux-p10 ]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -291,7 +291,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-rawhide, fedora-40, rocky-9, almalinux-8, centos-9-stream ]
+        os: [ fedora-rawhide, fedora-40, rocky-9, almalinux-8, centos-9-stream, altlinux-p10 ]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -322,7 +322,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-rawhide, fedora-40, fedora-39, centos-9-stream, rocky-9, rocky-8, almalinux-9, almalinux-8 ]
+        os: [ fedora-rawhide, fedora-40, fedora-39, centos-9-stream, rocky-9, rocky-8, almalinux-9, almalinux-8, altlinux-p10 ]
     timeout-minutes: 30
     steps:
       - uses: actions/download-artifact@v4
