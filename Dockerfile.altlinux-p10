@@ -6,7 +6,7 @@ RUN groupadd -g 289 ipaapi; useradd -u 289 -g 289 -c 'IPA Framework User' -r -d 
 
 # Workaround https://bugzilla.redhat.com/show_bug.cgi?id=1615948
 RUN ln -s /bin/false /usr/sbin/systemd-machine-id-setup
-RUN apt-get update && apt-get install -y freeipa-server freeipa-server-dns freeipa-server-trust-ad patch freeipa-healthcheck freeipa-client-epn && apt-get clean
+RUN apt-get update && apt-get install -y words glibc-locales glibc-i18ndata freeipa-server freeipa-server-dns freeipa-server-trust-ad patch freeipa-healthcheck freeipa-client-epn sudo && apt-get clean
 
 # debug: RUN test $( getent passwd | grep -E "^(dirsrv:x:389|ipaapi:x:289|kdcproxy:x:288|pkiuser:x:17):" | wc -l ) -eq 4
 
@@ -17,6 +17,8 @@ RUN systemctl mask rpc-gssd.service
 # debug: RUN test -f /etc/machine-id && ! test -s /etc/machine-id
 # debug: RUN test -z "$container"
 ENV container oci
+ENV LANG=en_US.UTF-8
+RUN localedef --force -i en_US -f UTF-8 en_US.utf-8
 
 # Establish reasonably low open files limit in the container
 RUN echo "DefaultLimitNOFILE=1024" >> /etc/systemd/system.conf
@@ -47,7 +49,10 @@ RUN systemd-tmpfiles --remove --create
 # Prepare for basic ipa-server-install in container
 # Address failing nis-domainname.service in the ipa-client-install step
 RUN mv /bin/nisdomainname /usr/bin/nisdomainname.orig
+RUN ln -s /bin/hostname /usr/bin/hostname
 ADD hostnamectl-wrapper /bin/nisdomainname
+
+COPY altlinux_container /usr/lib64/python3/site-packages/ipaplatform/altlinux_container
 
 COPY patches/ipa-altlinux-p10.patch /root
 RUN set -o pipefail ; patch --verbose -p0 --fuzz=0 < /root/ipa-altlinux-p10.patch | tee /dev/null | sed -n 's/^patching file //;T;/\.py$/p' | xargs /usr/bin/python3 -m compileall
@@ -57,8 +62,8 @@ RUN set -o pipefail ; patch --verbose -p0 --fuzz=0 < /root/ipa-altlinux-p10.patc
 # Move configuration and data to data volume
 COPY patches/ipa-data-altlinux-p10.patch /root
 RUN set -o pipefail ; patch --verbose -p0 --fuzz=0 < /root/ipa-data-altlinux-p10.patch | tee /dev/null | sed -n 's/^patching file //;T;/\.py$/p' | xargs /usr/bin/python3 -m compileall
-COPY ipaplatform-rhel.conf /usr/lib/systemd/system.conf.d/ipaplatform-override.conf
-ENV IPAPLATFORM_OVERRIDE=rhel_container
+COPY ipaplatform-altlinux.conf /usr/lib/systemd/system.conf.d/ipaplatform-override.conf
+ENV IPAPLATFORM_OVERRIDE=altlinux_container
 
 COPY journald-storage.conf /usr/lib/systemd/journald.conf.d/storage.conf
 
@@ -69,7 +74,8 @@ COPY ipa-join /usr/sbin/ipa-join
 RUN control system-auth sss
 
 COPY utils/prepare-volume-template utils/populate-volume-from-template utils/extract-rpm-upgrade-scriptlets /usr/local/bin/
-COPY volume-data-list volume-tmp-list volume-data-autoupdate /etc/
+COPY volume-data-list-altlinux /etc/volume-data-list
+COPY volume-tmp-list volume-data-autoupdate /etc/
 RUN /usr/local/bin/prepare-volume-template /etc/volume-data-list /data
 RUN /usr/local/bin/prepare-volume-template /etc/volume-tmp-list /tmp
 RUN /usr/local/bin/extract-rpm-upgrade-scriptlets
@@ -90,11 +96,25 @@ RUN ln -sv /usr/lib/systemd/system/ipa-server-configure-first.service /data-temp
 COPY exit-status.conf /usr/lib/systemd/system/systemd-poweroff.service.d/
 
 RUN ln -s /lib/systemd/systemd /usr/sbin/init
-RUN ln -s /lib/systemd/system/httpd2.service /usr/lib/systemd/system/httpd.service
+
+# Prepare HTTPD2
+RUN rm -f /data-template/etc/httpd2/modules /data-template/etc/httpd2/logs /data-template/etc/httpd2/lock /data-template/etc/httpd2/uploads
+RUN ln -s /usr/lib64/apache2/modules /data-template/etc/httpd2/modules
+RUN ln -s /data/var/log/httpd2 /data-template/etc/httpd2/logs
+RUN ln -s /data/var/lock/httpd2 /data-template/etc/httpd2/lock
+RUN ln -s /data/var/run/httpd2 /data-template/etc/httpd2/run
+RUN ln -s /data/var/spool/apache2/uploads /data-template/etc/httpd2/uploads
+
+# Prepare gssproxy
+COPY gssproxy.service /lib/systemd/system/gssproxy.service
+RUN ln -sv /lib/systemd/system/gssproxy.service /data-template/etc/systemd/system/container-ipa.target.wants/gssproxy.service
 
 EXPOSE 53/udp 53 80 443 389 636 88 464 88/udp 464/udp 123/udp
 
 RUN uuidgen > /data-template/build-id
+
+# RUN rm -f /usr/sbin/ipa-client-install && ln -s /bin/true /usr/sbin/ipa-client-install
+RUN sed -i -r 's/^(session\s+required\s+pam_limits.so)/#\1/' /data-template/etc/pam.d/*
 
 # Invocation:
 # docker run -ti -v /opt/ipa-data:/data:Z -h ipa.example.test ${NAME} [ options ]
