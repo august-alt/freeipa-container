@@ -1,0 +1,11 @@
+/etc/.updated
+/etc/ld.so.cache
+/root/.cache/
+/root/.ipa_cache
+/root/.ipa/log/
+/var/.updated
+/var/lib/certmonger/
+/var/lib/gssproxy/
+/var/lib/chrony/
+/var/tmp/
+/usr/lib64/python3/site-packages/ipaplatform/altlinux_container/__pycache__/

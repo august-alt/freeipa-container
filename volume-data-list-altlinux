@@ -23,12 +23,15 @@
 /etc/pki/pki-tomcat
 /etc/pkcs11/modules/
 /etc/rndc.key
+/etc/rc.d/
 /etc/samba/
 /etc/sssd/
 /etc/sysconfig/
 /etc/systemd/system/
 /etc/tmpfiles.d/
+/etc/udev/
 /etc/yp.conf
+/etc/.updated
 /root/ca-agent.p12
 /root/cacert.p12
 /root/kracert.p12
@@ -42,6 +45,7 @@
 /usr/share/ipa/html/krb.js
 /usr/share/ipa/html/krbrealm.con
 /usr/share/ipa/html/preferences.html
+/var/cache/ldconfig/
 /var/kerberos/krb5kdc/
 /var/lib/kerberos/krb5kdc/
 /var/lib/authconfig/
@@ -52,6 +56,7 @@
 /var/lib/ipa/
 /var/lib/ipa-client/
 /var/lib/pki/
+/var/lib/rpm/
 /var/lib/samba/
 /var/lib/softhsm/tokens/
 /var/lib/sss/db/
