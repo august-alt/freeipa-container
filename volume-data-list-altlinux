@@ -56,7 +56,6 @@
 /var/lib/ipa/
 /var/lib/ipa-client/
 /var/lib/pki/
-/var/lib/rpm/
 /var/lib/samba/
 /var/lib/softhsm/tokens/
 /var/lib/sss/db/
