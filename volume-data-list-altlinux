@@ -56,6 +56,15 @@
 /var/lib/ipa/
 /var/lib/ipa-client/
 /var/lib/pki/
+/var/lib/rpm/__db.001
+/var/lib/rpm/__db.002
+/var/lib/rpm/__db.003
+/var/lib/rpm/__db.004
+/var/lib/rpm/__db.005
+/var/lib/rpm/__db.006
+/var/lib/rpm/__db.007
+/var/lib/rpm/__db.008
+/var/lib/rpm/__db.009
 /var/lib/samba/
 /var/lib/softhsm/tokens/
 /var/lib/sss/db/
