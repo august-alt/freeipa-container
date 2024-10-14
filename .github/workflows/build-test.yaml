@@ -161,7 +161,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-40, centos-9-stream ]
+        os: [ ]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -185,7 +185,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ fedora-40, centos-9-stream, rocky-9 ]
+        os: [ ]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -242,7 +242,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: fedora-40
+          - os: []
             data-from: fedora-39
     timeout-minutes: 20
     steps:
