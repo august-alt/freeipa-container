@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix:
         os: [ { distr: "alt:p10", dockerfile: "altlinux-p10", artifact: ":p10" } ]
-        architecture: [ amd64, i386 ]
+        architecture: [ amd64 ]
     with:
       distr: ${{ matrix.os.distr }}
       architecture: ${{ matrix.architecture }}
