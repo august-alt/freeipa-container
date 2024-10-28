@@ -65,6 +65,17 @@ jobs:
           path: freeipa-server-${{ matrix.os }}
           retention-days: 1
 
+  build-altlinux-images:
+    uses: ./.github/workflows/build-container.yml
+    secrets: inherit
+    strategy:
+      matrix:
+        os: [ { distr: "alt:p10", artifact: ":p10" } ]
+        architecture: [ amd64, i386 ]
+    with:
+      distr: ${{ matrix.os.distr }}
+      architecture: ${{ matrix.architecture }}
+
   test-docker:
     name: Run with docker
     runs-on: ubuntu-22.04
