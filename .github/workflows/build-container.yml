@@ -34,7 +34,7 @@ jobs:
           --cache-from type=gha,scope=$GITHUB_REF_NAME-${{ inputs.architecture }}-image \
           --cache-to type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ inputs.architecture }}-image \
           --build-arg DISTR=${{ inputs.distr }} --build-arg ARCH=${{ inputs.architecture }} \
-          --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --platform ${{ inputs.architecture }} .
+          --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --platform ${{ inputs.architecture }} -f Dockerfile.${{ matrix.os }} .
 
       - name: Push container
         if: github.ref == 'refs/heads/master'
