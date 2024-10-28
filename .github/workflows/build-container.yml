@@ -11,6 +11,10 @@ on:
         description: "Architecture"
         type: string
         required: true
+      dockerfile:
+        description: "Dockerfile"
+        type: string
+        required: true
 
 jobs:
   freeipa-build-container:
