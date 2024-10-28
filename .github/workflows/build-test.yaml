@@ -70,7 +70,7 @@ jobs:
     secrets: inherit
     strategy:
       matrix:
-        os: [ { distr: "alt:p10", artifact: ":p10" } ]
+        os: [ { distr: "alt:p10", dockerfile: "altlinux-p10", artifact: ":p10" } ]
         architecture: [ amd64, i386 ]
     with:
       distr: ${{ matrix.os.distr }}
